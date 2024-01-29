@@ -1,23 +1,23 @@
 import { useQuery } from "react-query";
 import { toast } from "react-toastify";
-import { getTemplates } from "../api";
+import { getQuestions } from "../api";
 
-const useTemplates = () => {
+const useQuestions = () => {
   const { data, isLoading, isError, refetch } = useQuery(
-    "templates",
+    "questions",
     async () => {
       try {
-        const templates = await getTemplates();
-        return templates;
+        const questions = await getQuestions();
+        return questions;
       } catch (error) {
         console.error(error);
-        toast.error("Error loading templates");
+        toast.error("Error loading questions");
       }
     },
     {
       refetchOnWindowFocus: false,
-    }
+    },
   );
   return { data, isLoading, isError, refetch };
 };
-export default useTemplates;
+export default useQuestions;

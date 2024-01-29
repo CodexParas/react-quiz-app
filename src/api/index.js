@@ -10,7 +10,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { auth, db } from "../config/firebase.config";
-import { toast } from "react-toastify";
+import { createQuiz } from "../hooks/createQuiz";
 
 export const getUserDetail = () => {
   return new Promise((resolve, reject) => {
@@ -27,7 +27,7 @@ export const getUserDetail = () => {
                 resolve(userData);
               });
             }
-          }
+          },
         );
         return unsubscribe;
       } else {
@@ -38,60 +38,39 @@ export const getUserDetail = () => {
   });
 };
 
-export const getTemplates = () => {
+export const getQuizes = (id) => {
   return new Promise((resolve, reject) => {
-    const templateQuery = query(
-      collection(db, "templates"),
-      orderBy("timeStamp", "asc")
-    );
-    const unsubscribe = onSnapshot(templateQuery, (querySnapshot) => {
-      const templates = querySnapshot.docs.map((doc) => doc.data());
-      resolve(templates);
+    const unsubscribe = onSnapshot(doc(db, "quizes", id), async (_doc) => {
+      if (_doc.exists()) {
+        resolve(_doc.data());
+      } else {
+        const _doc = await createQuiz();
+        setDoc(doc(db, "quizes", _doc._id), _doc).then(() => {
+          resolve(_doc);
+        });
+      }
     });
     return unsubscribe;
   });
 };
-
-export const saveToFavourites = async (user, data) => {
-  if (!data?.favourites?.includes(user?.uid)) {
-    const docRef = doc(db, "templates", data?._id);
-    await updateDoc(docRef, { favourites: arrayUnion(user?.uid) })
-      .then(() => {
-        toast.success("Added to favourites");
-      })
-      .catch((err) => {
-        toast.error(err.message);
-      });
-  } else {
-    const docRef = doc(db, "templates", data?._id);
-    await updateDoc(docRef, { favourites: arrayRemove(user?.uid) })
-      .then(() => {
-        toast.success("Removed from favourites");
-      })
-      .catch((err) => {
-        toast.error(err.message);
-      });
-  }
+export const getQuestions = () => {
+  return new Promise((resolve, reject) => {
+    const quizQuery = query(
+      collection(db, "questions"),
+      orderBy("timeStamp", "asc"),
+    );
+    const unsubscribe = onSnapshot(quizQuery, (querySnapshot) => {
+      const questions = querySnapshot.docs.map((doc) => doc.data());
+      resolve(questions);
+    });
+    return unsubscribe;
+  });
 };
 
 export const getTemplateDetails = async (id) => {
   return new Promise((resolve, reject) => {
     const unsubscribe = onSnapshot(doc(db, "templates", id), (doc) => {
       resolve(doc.data());
-    });
-    return unsubscribe;
-  });
-};
-
-export const getSavedResumes = async (uid) => {
-  return new Promise((resolve, reject) => {
-    const templateQuery = query(
-      collection(db, "users", uid, "resumes"),
-      orderBy("timeStamp", "asc")
-    );
-    const unsubscribe = onSnapshot(templateQuery, (querySnapshot) => {
-      const templates = querySnapshot.docs.map((doc) => doc.data());
-      resolve(templates);
     });
     return unsubscribe;
   });
